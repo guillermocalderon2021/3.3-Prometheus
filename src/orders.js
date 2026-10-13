@@ -26,6 +26,9 @@ export async function createOrder(req, res) {
 
   const route = "/orders";
 
+  // Instrumentación de Prometheus:
+  // - aumenta el número de peticiones en curso para esta ruta
+  // - inicia el temporizador para medir latencia por método y ruta
   requestsInProgress.inc({ route });
   const endTimer = requestDuration.startTimer({
     method: req.method,
@@ -60,6 +63,10 @@ export async function createOrder(req, res) {
   } finally {
     const statusCode = String(res.statusCode);
 
+    // Finalización de la instrumentación:
+    // - registra el total de respuestas y su código HTTP
+    // - actualiza el gauge de peticiones activas
+    // - envia la duración observada al histograma
     requestsTotal.inc({
       method: req.method,
       route,
@@ -78,6 +85,7 @@ export async function getOrder(req, res) {
   const { id } = req.params;
   const route = "/orders/:id";
 
+  // Instrumentación de Prometheus para la consulta individual de un pedido.
   requestsInProgress.inc({ route });
   const endTimer = requestDuration.startTimer({
     method: req.method,
@@ -100,6 +108,8 @@ export async function getOrder(req, res) {
   } finally {
     const statusCode = String(res.statusCode);
 
+    // Cierre de métricas para la consulta de un pedido:
+    // el contador refleja la respuesta final y el historial mide su duración.
     requestsTotal.inc({
       method: req.method,
       route,
