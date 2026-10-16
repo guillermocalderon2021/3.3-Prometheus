@@ -1,0 +1,59 @@
+services:
+  orders-api:
+    build:
+      context: .
+    container_name: orders-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src:ro
+    environment:
+      PORT: "3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 2s
+      timeout: 1s
+      retries: 20
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.60.6
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus-3.5.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      orders-api:
+        condition: service_healthy
+      cadvisor:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  grafana-data:
