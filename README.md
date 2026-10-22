@@ -39,7 +39,7 @@ node scripts/doctor-3.6.js
 ## Levantar el entorno
 
 ```bash
-docker compose -f compose-3.6.yaml up --build -d
+docker compose up --build -d
 ```
 
 Servicios:
